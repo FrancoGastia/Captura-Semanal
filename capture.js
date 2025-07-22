@@ -7,10 +7,10 @@ puppeteer.use(StealthPlugin());
   const date = new Date().toISOString().split('T')[0];
   const fileName = `screenshot-${date}.png`;
 
-  const browser = await puppeteer.launch({
-    headless: false, // Importante para que algunas páginas no bloqueen
-    args: ['--no-sandbox', '--disable-setuid-sandbox'],
-  });
+const browser = await puppeteer.launch({
+  headless: "new",  // compatible con Puppeteer moderno y GitHub Actions
+  args: ['--no-sandbox', '--disable-setuid-sandbox'],
+});
 
   const page = await browser.newPage();
 
