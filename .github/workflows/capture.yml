@@ -10,8 +10,10 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Clonar repositorio
+    - name: Clonar repositorio con acceso de escritura
       uses: actions/checkout@v3
+      with:
+        token: ${{ secrets.GH_PAT }}
 
     - name: Instalar Node.js
       uses: actions/setup-node@v3
@@ -34,4 +36,3 @@ jobs:
         git add screenshots/
         git commit -m "📸 Captura semanal - $(date +'%Y-%m-%d')" || echo "Sin cambios"
         git push origin HEAD
-
