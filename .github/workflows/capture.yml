@@ -35,5 +35,3 @@ jobs:
         git commit -m "📸 Captura semanal - $(date +'%Y-%m-%d')" || echo "Sin cambios"
         git push origin HEAD
 
-        git commit -m "📸 Captura semanal - $(date +'%Y-%m-%d')" || echo "Sin cambios"
-        git push
