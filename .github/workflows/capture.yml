@@ -3,7 +3,7 @@ name: Captura semanal
 on:
   schedule:
     - cron: '0 9 * * 1'  # Lunes 9am UTC (6am Argentina)
-  workflow_dispatch:  # Permite ejecutarlo manualmente también
+  workflow_dispatch:
 
 jobs:
   screenshot:
@@ -18,7 +18,7 @@ jobs:
       with:
         node-version: '18'
 
-    - name: Instalar Puppeteer y plugins stealth
+    - name: Instalar dependencias
       run: npm install puppeteer puppeteer-extra puppeteer-extra-plugin-stealth
 
     - name: Ejecutar captura con evasión
