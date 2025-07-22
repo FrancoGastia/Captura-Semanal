@@ -10,20 +10,18 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Clonar repositorio con acceso de escritura
+    - name: Clonar repositorio
       uses: actions/checkout@v3
-      with:
-        token: ${{ secrets.GH_PAT }}
 
     - name: Instalar Node.js
       uses: actions/setup-node@v3
       with:
         node-version: '18'
 
-    - name: Instalar Puppeteer
-      run: npm install puppeteer
+    - name: Instalar Puppeteer y plugins stealth
+      run: npm install puppeteer puppeteer-extra puppeteer-extra-plugin-stealth
 
-    - name: Ejecutar captura
+    - name: Ejecutar captura con evasión
       run: node capture.js
 
     - name: Commit de la captura
