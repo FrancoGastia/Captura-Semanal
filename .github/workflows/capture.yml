@@ -18,7 +18,7 @@ jobs:
       with:
         node-version: '18'
 
-    - name: Instalar dependencias
+    - name: Instalar Puppeteer y plugins stealth
       run: npm install puppeteer puppeteer-extra puppeteer-extra-plugin-stealth
 
     - name: Ejecutar captura con evasión
@@ -34,5 +34,3 @@ jobs:
         git add screenshots/
         git commit -m "📸 Captura semanal - $(date +'%Y-%m-%d')" || echo "Sin cambios"
         git push origin HEAD
-
-
