@@ -25,7 +25,7 @@ async function autoScroll(page){
   const browser = await puppeteer.launch({ args: ['--no-sandbox', '--disable-setuid-sandbox'] });
   const page = await browser.newPage();
 
-  await page.goto('https://tusitio.com', { waitUntil: 'networkidle2' });
+  await page.goto('https://www.despegar.com.ar/', { waitUntil: 'networkidle2' });
 
   // Espera fija con método compatible (reemplaza waitForTimeout)
   await new Promise(resolve => setTimeout(resolve, 3000));
