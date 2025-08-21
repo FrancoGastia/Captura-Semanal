@@ -1,137 +1,206 @@
-name: Captura semanal Despegar
+const puppeteer = require('puppeteer-extra');
+const StealthPlugin = require('puppeteer-extra-plugin-stealth');
+const fs = require('fs');
+const path = require('path');
 
-on:
-  schedule:
-    - cron: '0 9 * * 1'  # Lunes 9am UTC (6am Argentina)
-  workflow_dispatch:
+puppeteer.use(StealthPlugin());
 
-jobs:
-  screenshot:
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
+// Generar user agent aleatorio
+const userAgents = [
+  'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+  'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+  'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+  'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36'
+];
+
+const randomUserAgent = userAgents[Math.floor(Math.random() * userAgents.length)];
+
+// Viewports realistas
+const viewports = [
+  { width: 1920, height: 1080 },
+  { width: 1366, height: 768 },
+  { width: 1440, height: 900 },
+  { width: 1536, height: 864 },
+  { width: 1280, height: 720 }
+];
+
+const randomViewport = viewports[Math.floor(Math.random() * viewports.length)];
+
+// Función para delay aleatorio
+const randomDelay = (min = 1000, max = 3000) => {
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+};
+
+// Función para simular movimientos de mouse humanos
+async function simulateHumanBehavior(page) {
+  // Movimientos de mouse aleatorios
+  for (let i = 0; i < 3; i++) {
+    const x = Math.floor(Math.random() * randomViewport.width);
+    const y = Math.floor(Math.random() * randomViewport.height);
+    await page.mouse.move(x, y, { steps: 10 });
+    await page.waitForTimeout(randomDelay(500, 1500));
+  }
+  
+  // Scroll aleatorio pequeño
+  await page.evaluate(() => {
+    window.scrollBy(0, Math.floor(Math.random() * 200));
+  });
+  
+  await page.waitForTimeout(randomDelay(1000, 2000));
+}
+
+(async () => {
+  let browser;
+  
+  try {
+    console.log('🚀 Iniciando navegador con configuración anti-detección...');
     
-    strategy:
-      fail-fast: false
-      matrix:
-        attempt: [1] # Puedes cambiar a [1, 2] para intentos múltiples
+    browser = await puppeteer.launch({
+      headless: 'new',
+      args: [
+        '--no-sandbox',
+        '--disable-setuid-sandbox',
+        '--disable-dev-shm-usage',
+        '--disable-accelerated-2d-canvas',
+        '--no-first-run',
+        '--no-zygote',
+        '--disable-gpu',
+        '--disable-features=VizDisplayCompositor',
+        '--disable-background-timer-throttling',
+        '--disable-backgrounding-occluded-windows',
+        '--disable-renderer-backgrounding',
+        '--disable-field-trial-config',
+        '--disable-back-forward-cache',
+        '--disable-ipc-flooding-protection',
+        '--enable-features=NetworkService,NetworkServiceInProcess',
+        '--force-color-profile=srgb',
+        '--metrics-recording-only',
+        '--use-mock-keychain',
+        '--disable-extensions',
+        '--disable-plugins',
+        '--disable-translate',
+        '--disable-logging',
+        '--disable-background-networking',
+        '--disable-default-apps',
+        '--mute-audio',
+        '--no-default-browser-check',
+        '--autoplay-policy=user-gesture-required',
+        '--disable-background-mode',
+        '--disable-backgrounding-occluded-windows',
+        '--disable-permissions-api',
+        '--disable-web-security',
+        '--allow-running-insecure-content'
+      ]
+    });
 
-    steps:
-    - name: 📥 Clonar repositorio
-      uses: actions/checkout@v4
-      with:
-        token: ${{ secrets.GH_PAT }}
+    const page = await browser.newPage();
+    
+    // Configurar viewport aleatorio
+    await page.setViewport(randomViewport);
+    console.log(`📱 Viewport configurado: ${randomViewport.width}x${randomViewport.height}`);
+    
+    // Configurar user agent aleatorio
+    await page.setUserAgent(randomUserAgent);
+    console.log(`🕵️ User agent configurado: ${randomUserAgent.substring(0, 50)}...`);
+    
+    // Headers adicionales para parecer más real
+    await page.setExtraHTTPHeaders({
+      'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
+      'Accept-Encoding': 'gzip, deflate, br',
+      'Accept-Language': 'es-AR,es;q=0.9,en;q=0.8',
+      'Cache-Control': 'no-cache',
+      'Pragma': 'no-cache',
+      'Sec-Fetch-Dest': 'document',
+      'Sec-Fetch-Mode': 'navigate',
+      'Sec-Fetch-Site': 'none',
+      'Sec-Fetch-User': '?1',
+      'Upgrade-Insecure-Requests': '1'
+    });
+    
+    // Configurar timezone argentino
+    await page.emulateTimezone('America/Argentina/Buenos_Aires');
+    
+    console.log('🌐 Navegando a Despegar...');
+    const url = 'https://www.despegar.com.ar/hoteles/';
+    
+    // Navegar con timeout extendido
+    await page.goto(url, { 
+      waitUntil: 'domcontentloaded', 
+      timeout: 60000 
+    });
+    
+    console.log('⏳ Esperando que la página cargue completamente...');
+    await page.waitForTimeout(randomDelay(3000, 5000));
+    
+    // Simular comportamiento humano
+    await simulateHumanBehavior(page);
+    
+    // Esperar a que elementos clave estén presentes
+    try {
+      await page.waitForSelector('body', { timeout: 10000 });
+      console.log('✅ Página cargada correctamente');
+    } catch (error) {
+      console.log('⚠️ No se pudo detectar selector específico, continuando...');
+    }
+    
+    // Scroll suave para cargar contenido dinámico
+    console.log('📜 Realizando scroll para cargar contenido...');
+    await smoothScroll(page);
+    
+    // Esperar un poco más después del scroll
+    await page.waitForTimeout(randomDelay(2000, 4000));
+    
+    // Crear directorio si no existe
+    if (!fs.existsSync('screenshots')) {
+      fs.mkdirSync('screenshots');
+    }
+    
+    // Generar nombre de archivo con timestamp
+    const timestamp = new Date().toISOString().split('T')[0];
+    const filePath = path.join('screenshots', `captura-${timestamp}.png`);
+    
+    console.log('📸 Tomando captura de pantalla...');
+    await page.screenshot({ 
+      path: filePath, 
+      fullPage: true,
+      quality: 90,
+      type: 'png'
+    });
+    
+    console.log(`✅ Captura guardada en: ${filePath}`);
+    
+  } catch (error) {
+    console.error('❌ Error durante la captura:', error.message);
+    process.exit(1);
+  } finally {
+    if (browser) {
+      await browser.close();
+      console.log('🔒 Navegador cerrado');
+    }
+  }
+})();
 
-    - name: 🔧 Configurar Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: '20'
-        # Removido cache: 'npm' para evitar error de package-lock.json
+// Función de scroll más suave y humana
+async function smoothScroll(page) {
+  await page.evaluate(async () => {
+    await new Promise((resolve) => {
+      let totalHeight = 0;
+      const distance = Math.floor(Math.random() * 200) + 100; // Scroll aleatorio entre 100-300px
+      const timer = setInterval(() => {
+        const scrollHeight = document.body.scrollHeight;
+        window.scrollBy(0, distance);
+        totalHeight += distance;
 
-    - name: 🛠️ Instalar dependencias
-      run: |
-        npm install puppeteer puppeteer-extra puppeteer-extra-plugin-stealth
+        // Pausas aleatorias durante el scroll
+        if (Math.random() > 0.7) {
+          setTimeout(() => {}, Math.random() * 1000);
+        }
 
-    - name: 🌐 Configurar variables de entorno
-      run: |
-        echo "PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=false" >> $GITHUB_ENV
-        echo "PUPPETEER_EXECUTABLE_PATH=/usr/bin/google-chrome" >> $GITHUB_ENV
-
-    - name: 🔍 Instalar dependencias del sistema
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y           gconf-service libasound2 libatk1.0-0 libc6 libcairo2           libcups2 libdbus-1-3 libexpat1 libfontconfig1 libgcc1           libgconf-2-4 libgdk-pixbuf2.0-0 libglib2.0-0 libgtk-3-0           libnspr4 libpango-1.0-0 libpangocairo-1.0-0 libstdc++6           libx11-6 libx11-xcb1 libxcb1 libxcomposite1 libxcursor1           libxdamage1 libxext6 libxfixes3 libxi6 libxrandr2           libxrender1 libxss1 libxtst6 ca-certificates fonts-liberation           libappindicator1 libnss3 lsb-release xdg-utils wget           libxrandr2 libasound2 libpangocairo-1.0-0 libatk1.0-0           libcairo-gobject2 libgtk-3-0 libgdk-pixbuf2.0-0
-
-    - name: 📸 Ejecutar captura con evasión avanzada
-      run: |
-        echo "🚀 Iniciando captura..."
-        node capture.js
-      env:
-        NODE_OPTIONS: '--max-old-space-size=4096'
-
-    - name: 🔍 Verificar captura generada
-      run: |
-        if [ -d "screenshots" ] && [ "$(ls -A screenshots)" ]; then
-          echo "✅ Capturas encontradas:"
-          ls -la screenshots/
-          # Verificar que la imagen no esté corrupta
-          for file in screenshots.png; do
-            if [ -f "$file" ]; then
-              size=$(wc -c < "$file")
-              echo "📏 Tamaño de $file: $size bytes"
-              if [ $size -lt 10000 ]; then
-                echo "⚠️ Advertencia: La imagen parece muy pequeña"
-              fi
-            fi
-          done
-        else
-          echo "❌ No se encontraron capturas"
-          exit 1
-        fi
-
-    - name: 📊 Generar reporte de captura
-      run: |
-        mkdir -p reports
-        echo "# 📸 Reporte de Captura - $(date +'%Y-%m-%d %H:%M:%S')" > reports/reporte.md
-        echo "" >> reports/reporte.md
-        echo "## 📋 Información de la Captura" >> reports/reporte.md
-        echo "- **Fecha**: $(date +'%Y-%m-%d %H:%M:%S UTC')" >> reports/reporte.md
-        echo "- **URL**: https://www.despegar.com.ar/hoteles/" >> reports/reporte.md
-        echo "- **Workflow**: ${{ github.workflow }}" >> reports/reporte.md
-        echo "- **Run ID**: ${{ github.run_id }}" >> reports/reporte.md
-        echo "" >> reports/reporte.md
-        echo "## 📁 Archivos Generados" >> reports/reporte.md
-        if [ -d "screenshots" ]; then
-          for file in screenshots; do
-            if [ -f "$file" ]; then
-              filename=$(basename "$file")
-              size=$(wc -c < "$file")
-              echo "- **$filename**: $size bytes" >> reports/reporte.md
-            fi
-          done
-        fi
-
-    - name: 💾 Commit y push de resultados
-      env:
-        GH_TOKEN: ${{ secrets.GH_PAT }}
-      run: |
-        git config --global user.email "actions@github.com"
-        git config --global user.name "GitHub Actions Bot"
-        git remote set-url origin https://x-access-token:${GH_TOKEN}@github.com/${{ github.repository }}
-        
-        # Añadir archivos
-        git add screenshots/ reports/ || true
-        
-        # Verificar si hay cambios
-        if git diff --staged --quiet; then
-          echo "📝 No hay cambios que commitear"
-        else
-          # Commit con mensaje descriptivo
-          timestamp=$(date +'%Y-%m-%d %H:%M:%S')
-          git commit -m "📸 Captura automática Despegar - $timestamp
-
-          🤖 Captura realizada por GitHub Actions
-          📅 Fecha: $timestamp UTC
-          🎯 Intento: ${{ matrix.attempt }}
-          🔗 Workflow: ${{ github.run_id }}"
-          
-          # Push con retry
-          for i in {1..3}; do
-            if git push origin HEAD; then
-              echo "✅ Push exitoso en intento $i"
-              break
-            else
-              echo "⚠️ Push falló en intento $i, reintentando..."
-              sleep 5
-            fi
-          done
-        fi
-
-    - name: 📤 Subir artefactos en caso de fallo
-      if: failure()
-      uses: actions/upload-artifact@v4
-      with:
-        name: debug-screenshots-${{ matrix.attempt }}
-        path: |
-          screenshots/
-          reports/
-        retention-days: 7
+        if (totalHeight >= scrollHeight - window.innerHeight) {
+          clearInterval(timer);
+          resolve();
+        }
+      }, Math.random() * 400 + 200); // Intervalo aleatorio entre 200-600ms
+    });
+  });
+}
