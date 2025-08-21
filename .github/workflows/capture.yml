@@ -1,4 +1,4 @@
-name: Captura semanal
+name: Captura semanal Despegar
 
 on:
   schedule:
@@ -8,31 +8,131 @@ on:
 jobs:
   screenshot:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
+    
+    strategy:
+      fail-fast: false
+      matrix:
+        attempt: [1] # Puedes cambiar a [1, 2] para intentos múltiples
 
     steps:
-    - name: Clonar repositorio con acceso de escritura
-      uses: actions/checkout@v3
+    - name: 📥 Clonar repositorio
+      uses: actions/checkout@v4
       with:
         token: ${{ secrets.GH_PAT }}
 
-    - name: Instalar Node.js
-      uses: actions/setup-node@v3
+    - name: 🔧 Configurar Node.js
+      uses: actions/setup-node@v4
       with:
-        node-version: '18'
+        node-version: '20'
+        cache: 'npm'
 
-    - name: Instalar Puppeteer + evasión
-      run: npm install puppeteer puppeteer-extra puppeteer-extra-plugin-stealth
+    - name: 🛠️ Instalar dependencias con caché
+      run: |
+        npm init -y
+        npm install puppeteer puppeteer-extra puppeteer-extra-plugin-stealth
 
-    - name: Ejecutar captura con evasión
-      run: node capture.js
+    - name: 🌐 Configurar variables de entorno
+      run: |
+        echo "PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=false" >> $GITHUB_ENV
+        echo "PUPPETEER_EXECUTABLE_PATH=/usr/bin/google-chrome" >> $GITHUB_ENV
 
-    - name: Commit de la captura
+    - name: 🔍 Instalar dependencias del sistema
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y           gconf-service libasound2 libatk1.0-0 libc6 libcairo2           libcups2 libdbus-1-3 libexpat1 libfontconfig1 libgcc1           libgconf-2-4 libgdk-pixbuf2.0-0 libglib2.0-0 libgtk-3-0           libnspr4 libpango-1.0-0 libpangocairo-1.0-0 libstdc++6           libx11-6 libx11-xcb1 libxcb1 libxcomposite1 libxcursor1           libxdamage1 libxext6 libxfixes3 libxi6 libxrandr2           libxrender1 libxss1 libxtst6 ca-certificates fonts-liberation           libappindicator1 libnss3 lsb-release xdg-utils wget           libxrandr2 libasound2 libpangocairo-1.0-0 libatk1.0-0           libcairo-gobject2 libgtk-3-0 libgdk-pixbuf2.0-0
+
+    - name: 📸 Ejecutar captura con evasión avanzada
+      run: |
+        echo "🚀 Iniciando captura..."
+        node capture.js
+      env:
+        NODE_OPTIONS: '--max-old-space-size=4096'
+
+    - name: 🔍 Verificar captura generada
+      run: |
+        if [ -d "screenshots" ] && [ "$(ls -A screenshots)" ]; then
+          echo "✅ Capturas encontradas:"
+          ls -la screenshots/
+          # Verificar que la imagen no esté corrupta
+          for file in screenshots/*.png; do
+            if [ -f "$file" ]; then
+              size=$(wc -c < "$file")
+              echo "📏 Tamaño de $file: $size bytes"
+              if [ $size -lt 10000 ]; then
+                echo "⚠️ Advertencia: La imagen parece muy pequeña"
+              fi
+            fi
+          done
+        else
+          echo "❌ No se encontraron capturas"
+          exit 1
+        fi
+
+    - name: 📊 Generar reporte de captura
+      run: |
+        mkdir -p reports
+        echo "# 📸 Reporte de Captura - $(date +'%Y-%m-%d %H:%M:%S')" > reports/reporte.md
+        echo "" >> reports/reporte.md
+        echo "## 📋 Información de la Captura" >> reports/reporte.md
+        echo "- **Fecha**: $(date +'%Y-%m-%d %H:%M:%S UTC')" >> reports/reporte.md
+        echo "- **URL**: https://www.despegar.com.ar/hoteles/" >> reports/reporte.md
+        echo "- **Workflow**: ${{ github.workflow }}" >> reports/reporte.md
+        echo "- **Run ID**: ${{ github.run_id }}" >> reports/reporte.md
+        echo "" >> reports/reporte.md
+        echo "## 📁 Archivos Generados" >> reports/reporte.md
+        if [ -d "screenshots" ]; then
+          for file in screenshots/*; do
+            if [ -f "$file" ]; then
+              filename=$(basename "$file")
+              size=$(wc -c < "$file")
+              echo "- **$filename**: $size bytes" >> reports/reporte.md
+            fi
+          done
+        fi
+
+    - name: 💾 Commit y push de resultados
       env:
         GH_TOKEN: ${{ secrets.GH_PAT }}
       run: |
         git config --global user.email "actions@github.com"
-        git config --global user.name "GitHub Actions"
+        git config --global user.name "GitHub Actions Bot"
         git remote set-url origin https://x-access-token:${GH_TOKEN}@github.com/${{ github.repository }}
-        git add screenshots/
-        git commit -m "📸 Captura semanal - $(date +'%Y-%m-%d')" || echo "Sin cambios"
-        git push origin HEAD
+        
+        # Añadir archivos
+        git add screenshots/ reports/ || true
+        
+        # Verificar si hay cambios
+        if git diff --staged --quiet; then
+          echo "📝 No hay cambios que commitear"
+        else
+          # Commit con mensaje descriptivo
+          timestamp=$(date +'%Y-%m-%d %H:%M:%S')
+          git commit -m "📸 Captura automática Despegar - $timestamp
+
+          🤖 Captura realizada por GitHub Actions
+          📅 Fecha: $timestamp UTC
+          🎯 Intento: ${{ matrix.attempt }}
+          🔗 Workflow: ${{ github.run_id }}"
+          
+          # Push con retry
+          for i in {1..3}; do
+            if git push origin HEAD; then
+              echo "✅ Push exitoso en intento $i"
+              break
+            else
+              echo "⚠️ Push falló en intento $i, reintentando..."
+              sleep 5
+            fi
+          done
+        fi
+
+    - name: 📤 Subir artefactos en caso de fallo
+      if: failure()
+      uses: actions/upload-artifact@v4
+      with:
+        name: debug-screenshots-${{ matrix.attempt }}
+        path: |
+          screenshots/
+          reports/
+        retention-days: 7
