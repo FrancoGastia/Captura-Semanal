@@ -1,0 +1,24 @@
+{
+  "name": "despegar-screenshot-bot",
+  "version": "1.0.0",
+  "description": "Bot automatizado para capturas de Despegar con evasión anti-bot",
+  "main": "capture.js",
+  "scripts": {
+    "capture": "node capture.js",
+    "test": "echo \"No tests specified\" && exit 0"
+  },
+  "dependencies": {
+    "puppeteer": "^21.0.0",
+    "puppeteer-extra": "^3.3.6",
+    "puppeteer-extra-plugin-stealth": "^2.11.2"
+  },
+  "keywords": [
+    "puppeteer",
+    "screenshot",
+    "automation",
+    "web-scraping",
+    "stealth"
+  ],
+  "author": "GitHub Actions Bot",
+  "license": "MIT"
+}
