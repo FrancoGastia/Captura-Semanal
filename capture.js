@@ -163,7 +163,6 @@ async function simulateHumanBehavior(page) {
     await page.screenshot({ 
       path: filePath, 
       fullPage: true,
-      quality: 90,
       type: 'png'
     });
     
