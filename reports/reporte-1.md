@@ -1,9 +1,9 @@
-# 📸 Reporte Captura Stealth - 2026-03-23 10:10:19
+# 📸 Reporte Captura Stealth - 2026-04-13 10:56:28
 
 ## 🎯 Información del Intento
 - **Intento**: 1
-- **Fecha**: 2026-03-23 10:10:19 UTC
-- **Workflow Run**: 23431774063
+- **Fecha**: 2026-04-13 10:56:28 UTC
+- **Workflow Run**: 24339298015
 - **Estrategia**: Stealth Avanzado con delays humanizados
 
 ## 📁 Resultados
@@ -40,4 +40,6 @@
 - **captura-stealth-2026-03-09.png**: 54872 bytes - ✅ EXITOSA
 - **captura-stealth-2026-03-16.png**: 57564 bytes - ✅ EXITOSA
 - **captura-stealth-2026-03-23.png**: 57672 bytes - ✅ EXITOSA
+- **captura-stealth-2026-04-06.png**: 57767 bytes - ✅ EXITOSA
+- **captura-stealth-2026-04-13.png**: 60535 bytes - ✅ EXITOSA
 - **screenshot-2025-07-22.png**: 40468 bytes - ⚠️ POSIBLE BLOQUEO
